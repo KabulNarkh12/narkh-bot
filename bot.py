@@ -1,4 +1,3 @@
-import asyncio
 import schedule
 import time
 import re
@@ -19,7 +18,7 @@ def get_rates_from_web():
         r = data['rates']
         
         if 'USD' in r: rates['🇺🇸 دالر امریکایی'] = round(1/r['USD'], 2)
-        if 'EUR' in r: rates['🇪🇺 یورو'] = round(1/r['EUR'], 2)
+        if 'EUR' in r: rates['🇪 یورو'] = round(1/r['EUR'], 2)
         if 'GBP' in r: rates['🇬🇧 پوند'] = round(1/r['GBP'], 2)
         if 'PKR' in r: rates['🇵🇰 روپیه پاکستانی'] = round(1/r['PKR'], 2)
         if 'IRR' in r: rates['🇮🇷 تومان'] = round(1/r['IRR']*10, 2)
@@ -36,7 +35,7 @@ def get_rates_from_web():
 def format_message(rates):
     now = datetime.now().strftime("%Y/%m/%d - %H:%M")
     msg = "━━━━━━━━━━━━━━━━━━\n"
-    msg += "💱 **نرخ اسعار امروز**\n"
+    msg += "💱 نرخ اسعار امروز\n"
     msg += "🏪 بازار کابل - افغانستان\n"
     msg += f"🕐 {now}\n"
     msg += "━━━━━━━━━━━━━━━━━━\n\n"
@@ -46,17 +45,16 @@ def format_message(rates):
     msg += "📢 @KabulNarkh12"
     return msg
 
-async def post_rates():
+def post_rates():
     print(f"شروع - {datetime.now()}")
     rates = get_rates_from_web()
     if rates:
         try:
             bot = Bot(token=BOT_TOKEN)
             message = format_message(rates)
-            await bot.send_message(
+            bot.send_message(
                 chat_id=CHANNEL_ID,
-                text=message,
-                parse_mode='Markdown'
+                text=message
             )
             print("✅ نشر شد!")
         except Exception as e:
@@ -64,12 +62,9 @@ async def post_rates():
     else:
         print("❌ نرخی پیدا نشد")
 
-def run():
-    asyncio.run(post_rates())
-
-schedule.every(30).minutes.do(run)
+schedule.every(30).minutes.do(post_rates)
 print("🚀 ربات شروع کرد...")
-run()
+post_rates()
 
 while True:
     schedule.run_pending()
