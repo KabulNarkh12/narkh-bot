@@ -3,45 +3,41 @@ import schedule
 import time
 import re
 from datetime import datetime
-from telethon.sync import TelegramClient
 from telegram import Bot
+import urllib.request
+import json
 
 BOT_TOKEN = "8830939229:AAGC-WcUFrOw9RUiI34iGr0cyuTbfMJ-WgY"
 CHANNEL_ID = "@KabulNarkh12"
-API_ID = 30837946
-API_HASH = "662e0ed8d8ec5772e61a73e6d400ef55"
-PHONE = "+93796908504"
 
-SOURCE_CHANNELS = [
-    "rahimallahjan1",
-    "KabulNarkh",
-    "aqbazjgani",
-]
-
-def extract_rates(text):
+def get_rates_from_web():
     rates = {}
-    patterns = {
-        '🇺🇸 دالر': r'دالر[^\d]*(\d+[\.,]\d+|\d+)',
-        '🇪🇺 یورو': r'یورو[^\d]*(\d+[\.,]\d+|\d+)',
-        '🇬🇧 پوند': r'پوند[^\d]*(\d+[\.,]\d+|\d+)',
-        '🇵🇰 روپیه': r'روپیه[^\d]*(\d+[\.,]\d+|\d+)',
-        '🇮🇷 تومان': r'تومان[^\d]*(\d+[\.,]\d+|\d+)',
-        '🇦🇪 درهم': r'درهم[^\d]*(\d+[\.,]\d+|\d+)',
-        '🇸🇦 ریال': r'ریال[^\d]*(\d+[\.,]\d+|\d+)',
-        '🇹🇷 لیره': r'لیره[^\d]*(\d+[\.,]\d+|\d+)',
-        '🇨🇳 یوان': r'یوان[^\d]*(\d+[\.,]\d+|\d+)',
-    }
-    for currency, pattern in patterns.items():
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            rates[currency] = match.group(1).replace(',', '.')
+    try:
+        url = "https://api.exchangerate-api.com/v4/latest/AFN"
+        req = urllib.request.urlopen(url, timeout=10)
+        data = json.loads(req.read())
+        r = data['rates']
+        
+        if 'USD' in r: rates['🇺🇸 دالر امریکایی'] = round(1/r['USD'], 2)
+        if 'EUR' in r: rates['🇪🇺 یورو'] = round(1/r['EUR'], 2)
+        if 'GBP' in r: rates['🇬🇧 پوند'] = round(1/r['GBP'], 2)
+        if 'PKR' in r: rates['🇵🇰 روپیه پاکستانی'] = round(1/r['PKR'], 2)
+        if 'IRR' in r: rates['🇮🇷 تومان'] = round(1/r['IRR']*10, 2)
+        if 'AED' in r: rates['🇦🇪 درهم'] = round(1/r['AED'], 2)
+        if 'SAR' in r: rates['🇸🇦 ریال سعودی'] = round(1/r['SAR'], 2)
+        if 'TRY' in r: rates['🇹🇷 لیره ترکی'] = round(1/r['TRY'], 2)
+        if 'CNY' in r: rates['🇨🇳 یوان چینی'] = round(1/r['CNY'], 2)
+        
+        print("✅ نرخ‌ها از API گرفته شد")
+    except Exception as e:
+        print(f"خطا: {e}")
     return rates
 
 def format_message(rates):
     now = datetime.now().strftime("%Y/%m/%d - %H:%M")
     msg = "━━━━━━━━━━━━━━━━━━\n"
     msg += "💱 **نرخ اسعار امروز**\n"
-    msg += "🏪 سرای شهزاده - کابل\n"
+    msg += "🏪 بازار کابل - افغانستان\n"
     msg += f"🕐 {now}\n"
     msg += "━━━━━━━━━━━━━━━━━━\n\n"
     for currency, rate in rates.items():
@@ -50,31 +46,14 @@ def format_message(rates):
     msg += "📢 @KabulNarkh12"
     return msg
 
-async def fetch_and_post():
+async def post_rates():
     print(f"شروع - {datetime.now()}")
-    all_rates = {}
-    try:
-        async with TelegramClient('bot_session', API_ID, API_HASH) as client:
-            for channel in SOURCE_CHANNELS:
-                try:
-                    messages = await client.get_messages(channel, limit=10)
-                    for msg in messages:
-                        if msg.text:
-                            rates = extract_rates(msg.text)
-                            if len(rates) >= 1:
-                                all_rates.update(rates)
-                                print(f"✅ نرخ از {channel} گرفته شد")
-                                break
-                except Exception as e:
-                    print(f"خطا در {channel}: {e}")
-    except Exception as e:
-        print(f"خطا: {e}")
-
-    if all_rates:
+    rates = get_rates_from_web()
+    if rates:
         try:
-            telegram_bot = Bot(token=BOT_TOKEN)
-            message = format_message(all_rates)
-            await telegram_bot.send_message(
+            bot = Bot(token=BOT_TOKEN)
+            message = format_message(rates)
+            await bot.send_message(
                 chat_id=CHANNEL_ID,
                 text=message,
                 parse_mode='Markdown'
@@ -86,7 +65,7 @@ async def fetch_and_post():
         print("❌ نرخی پیدا نشد")
 
 def run():
-    asyncio.run(fetch_and_post())
+    asyncio.run(post_rates())
 
 schedule.every(30).minutes.do(run)
 print("🚀 ربات شروع کرد...")
