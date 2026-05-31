@@ -1,9 +1,6 @@
 import asyncio
-import schedule
-import time
-import re
 import os
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from telegram import Bot
@@ -23,7 +20,8 @@ SOURCE_CHANNELS = [
 bot = Bot(token=BOT_TOKEN)
 
 def format_message(text, source):
-    now = datetime.now().strftime("%Y/%m/%d - %H:%M:%S")
+    kabul_time = datetime.now(timezone.utc) + timedelta(hours=4, minutes=30)
+    now = kabul_time.strftime("%Y/%m/%d - %H:%M:%S")
     msg = "━━━━━━━━━━━━━━━━━━\n"
     msg += "💱 نرخ اسعار لحظه‌ای\n"
     msg += "🏪 سرای شهزاده کابل\n"
