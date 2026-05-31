@@ -36,7 +36,7 @@ def format_message(text, source):
 async def main():
     print("🚀 ربات شروع کرد...")
     client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
-    await client.start()
+    await client.connect()
     print("✅ به تلگرام وصل شد!")
 
     @client.on(events.NewMessage(chats=SOURCE_CHANNELS))
