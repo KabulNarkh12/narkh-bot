@@ -3,7 +3,7 @@ import os
 from datetime import datetime, timezone, timedelta
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
-from telegram import Bot
+import telegram
 
 BOT_TOKEN = "8830939229:AAGC-WcUFrOw9RUiI34iGr0cyuTbfMJ-WgY"
 CHANNEL_ID = "@KabulNarkh12"
@@ -16,8 +16,6 @@ SOURCE_CHANNELS = [
     'KabulNarkh',
     'rahimallahjan1',
 ]
-
-bot = Bot(token=BOT_TOKEN)
 
 def format_message(text, source):
     kabul_time = datetime.now(timezone.utc) + timedelta(hours=4, minutes=30)
@@ -48,7 +46,7 @@ async def main():
             source = event.chat.username
             print(f"✅ پیام جدید از @{source}")
             message = format_message(text, source)
-            bot.send_message(chat_id=CHANNEL_ID, text=message)
+            await client.send_message(CHANNEL_ID, message)
             print("✅ نشر شد!")
         except Exception as e:
             print(f"خطا: {e}")
