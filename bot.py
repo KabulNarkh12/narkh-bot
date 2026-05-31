@@ -2,7 +2,7 @@ import asyncio
 import os
 import re
 from datetime import datetime, timezone, timedelta
-from telethon import TelegramClient, events
+from telethon import TelegramClient, events, functions
 from telethon.sessions import StringSession
 
 BOT_TOKEN = "8830939229:AAGC-WcUFrOw9RUiI34iGr0cyuTbfMJ-WgY"
@@ -40,7 +40,8 @@ async def main():
     print("🚀 ربات شروع کرد...")
     client = TelegramClient(StringSession(SESSION_STRING), API_ID, API_HASH)
     await client.connect()
-    print("✅ به تلگرام وصل شد!")
+    await client(functions.account.UpdateStatusRequest(offline=True))
+    print("✅ به تلگرام وصل شد - حالت آفلاین!")
 
     @client.on(events.NewMessage(chats=SOURCE_CHANNELS))
     async def handler(event):
@@ -51,7 +52,7 @@ async def main():
             if not is_rate_message(text):
                 print("⏭️ پیام تبلیغاتی - رد شد")
                 return
-            print(f"✅ نرخ جدید دریافت شد")
+            print("✅ نرخ جدید دریافت شد")
             message = format_message(text)
             await client.send_message(CHANNEL_ID, message)
             print("✅ نشر شد!")
