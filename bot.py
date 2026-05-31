@@ -1,9 +1,9 @@
 import asyncio
 import os
+import re
 from datetime import datetime, timezone, timedelta
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
-import telegram
 
 BOT_TOKEN = "8830939229:AAGC-WcUFrOw9RUiI34iGr0cyuTbfMJ-WgY"
 CHANNEL_ID = "@KabulNarkh12"
@@ -17,7 +17,13 @@ SOURCE_CHANNELS = [
     'rahimallahjan1',
 ]
 
-def format_message(text, source):
+def is_rate_message(text):
+    keywords = ['خرید', 'فروش', 'خريد', 'نرخ', 'دالر', 'یورو', 'پوند', 'روپیه', 'درهم', 'تومان']
+    has_keyword = any(word in text for word in keywords)
+    has_number = bool(re.search(r'\d+[\.,]\d+', text))
+    return has_keyword and has_number
+
+def format_message(text):
     kabul_time = datetime.now(timezone.utc) + timedelta(hours=4, minutes=30)
     now = kabul_time.strftime("%Y/%m/%d - %H:%M:%S")
     msg = "━━━━━━━━━━━━━━━━━━\n"
@@ -27,7 +33,6 @@ def format_message(text, source):
     msg += "━━━━━━━━━━━━━━━━━━\n\n"
     msg += text
     msg += "\n\n━━━━━━━━━━━━━━━━━━\n"
-    msg += f"📡 منبع: @{source}\n"
     msg += "📢 @KabulNarkh12"
     return msg
 
@@ -43,9 +48,11 @@ async def main():
             text = event.message.text
             if not text:
                 return
-            source = event.chat.username
-            print(f"✅ پیام جدید از @{source}")
-            message = format_message(text, source)
+            if not is_rate_message(text):
+                print("⏭️ پیام تبلیغاتی - رد شد")
+                return
+            print(f"✅ نرخ جدید دریافت شد")
+            message = format_message(text)
             await client.send_message(CHANNEL_ID, message)
             print("✅ نشر شد!")
         except Exception as e:
